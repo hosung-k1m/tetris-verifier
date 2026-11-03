@@ -135,7 +135,10 @@ def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path)
     log = tmp_path / COMMIT_LOG
     log.write_text(
         json.dumps(
-            {"puzzle": name, "moves": [{"orientation": move.orientation, "column": move.column} for move in played]}
+            {
+                "puzzle": name,
+                "moves": [{"orientation": move.orientation, "column": move.column} for move in played[:-1]],
+            }
         )
     )
     result = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played), None, tmp_path)
@@ -148,6 +151,11 @@ def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path)
     changed = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played[1:]), None, tmp_path)
     assert not changed["valid"]
     assert "differs" in changed["message"]
+
+    log.write_text(json.dumps({"puzzle": name, "moves": []}))
+    skipped = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played), None, tmp_path)
+    assert not skipped["valid"]
+    assert "Only the last drop" in skipped["message"]
 
 
 def test_play_preview_offers_eight_distinct_drops_in_board_order():

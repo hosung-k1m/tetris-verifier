@@ -58,12 +58,16 @@ def verify_task(task, arguments, output, reference, workspace):
     if not log.is_file():
         return result(False, "No placements were committed through the play tool.", moves=[])
     committed = json.loads(log.read_text(encoding="utf-8"))
-    submitted = {
-        "puzzle": arguments.puzzle,
-        "moves": [{"orientation": move.orientation, "column": move.column} for move in output.moves],
-    }
-    if committed != submitted:
+    submitted = [{"orientation": move.orientation, "column": move.column} for move in output.moves]
+    committed_count = len(committed["moves"])
+    if committed != {"puzzle": arguments.puzzle, "moves": submitted[:committed_count]}:
         return result(False, "Submission differs from the committed placements.", moves=[])
+    if len(submitted) > committed_count:
+        final_turn, _ = replay(arguments.puzzle, output.moves[:committed_count])
+        if len(submitted) != committed_count + 1 or final_turn is None or final_turn.remaining:
+            return result(False, "Only the last drop can be submitted without a play tool call.", moves=[])
+        if not legal(final_turn.current, output.moves[-1]):
+            return result(False, "Illegal orientation or column on the last drop.", moves=[])
 
     turn, steps = replay(arguments.puzzle, output.moves)
     graded = [

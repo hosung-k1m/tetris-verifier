@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nanoagent-tetris-verifier"
-version = "0.2.7"
+version = "0.2.8"
 description = "Watch AI play Tetris and review the verified optimality of each drop"
 requires-python = ">=3.12"
 dependencies = ["mcp>=1.27,<2", "slimconfig"]

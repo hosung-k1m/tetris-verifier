@@ -10,7 +10,7 @@ The board is 10 columns by 8 rows. Orientations count clockwise turns from the s
 
 ## Tools
 
-`play-puzzle` uses `play_prefix` to open a curated fixture and commit one placement at a time. The next piece is revealed only after the tool records the commitment. The verifier checks the submitted list against this tool-owned record and independently replays and grades each move. The entire puzzle passes if it is complete and every move was optimal.
+`play-puzzle` uses `play_prefix` to open a curated fixture and commit one placement at a time. The next piece is revealed only after the tool records the commitment. The AI submits its final drop directly because there is no next piece to reveal. The verifier checks the earlier moves against the tool-owned record and independently replays and grades every drop. The entire puzzle passes if it is complete and every move was optimal.
 
 `choose-optimal-move` grades a single placement on a custom turn. Its `legal_placements` tool reports the immediate consequences of a drop.
 
