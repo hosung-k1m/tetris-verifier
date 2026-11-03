@@ -68,6 +68,7 @@ class Candidate(Output):
     holes: Annotated[int, "Empty cells below occupied cells after the drop"]
     height: Annotated[int, "Height of the tallest column after the drop"]
     top_out: bool
+    board: Annotated[str, "Board after the drop, top to bottom, rows separated by /"]
 
 
 @dataclass

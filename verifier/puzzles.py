@@ -46,9 +46,12 @@ def prefix(name, committed):
             continue
         seen.add(after)
         resulting_board = board if after is None else after
-        heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*unpack(resulting_board)))]
+        rows = unpack(resulting_board)
+        heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*rows))]
         holes = sum(heights) - resulting_board.bit_count()
-        options.append(Candidate(MoveOutput(orientation, column), cleared, holes, max(heights), after is None))
+        options.append(
+            Candidate(MoveOutput(orientation, column), cleared, holes, max(heights), after is None, "/".join(rows))
+        )
     options.sort(key=lambda option: (option.top_out, -option.cleared, option.holes, option.height))
     shortlist = sorted(options[:8], key=lambda option: (option.move.orientation, option.move.column))
     return PrefixOutput(turn, shortlist)
