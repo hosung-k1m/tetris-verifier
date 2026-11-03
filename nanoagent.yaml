@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tetris-verifier
 name: "Tetris: No Peek"
-version: 0.2.2
+version: 0.2.3
 status: ready
 spec: nanoagent.plugin/v0001
 runtime > nanoagent.plugin.v0001.RuntimeConfig:
@@ -24,16 +24,12 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
     tools: [play_prefix]
     reference: null
     instructions: |-
-      First call play_prefix with the requested puzzle and moves: []. Then make one tool call
-      per turn. If turn is null, immediately call submit with the exact committed moves list
-      and finish. Otherwise append one move and call play_prefix again.
-      Spend at most 120 words of reasoning per turn. Use the returned rotations directly.
-      Their indices are orientations, and each lists its exact shape, available columns, and
-      immediate clears. If every column list is empty, commit orientation 0, column 0 to top out.
-      Aim to minimize the worst terminal cell count over the unordered remaining pieces.
-      Look briefly for line clears and accessible gaps. If you cannot prove the best move quickly,
-      commit your best candidate and keep playing. The verifier will calculate exact optimality.
-      Completing the puzzle and calling submit is required even if you are unsure of a move.
+      Open with play_prefix using the requested puzzle and moves: [].
+      For each returned turn, pick a move from candidates, append it, and call play_prefix
+      immediately. Compare only the listed clears, holes, and height. Prefer surviving drops, more clears,
+      fewer holes, and lower height. Make the choice in one sentence at most.
+      The verifier handles the full search. Do not reconstruct rotations or simulate future drops.
+      When turn is null, immediately call submit with the exact committed moves and finish.
   choose-optimal-move:
     description: Grade one AI placement for an explicitly supplied custom turn.
     runner: agent

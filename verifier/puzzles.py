@@ -1,6 +1,6 @@
-from contract import PrefixOutput, Rotation, TurnInput
+from contract import Candidate, MoveOutput, PrefixOutput, TurnInput
 
-from .rules import SHAPES, WIDTH, drop, legal, pack, rotations, unpack
+from .rules import drop, legal, moves, pack, unpack
 
 PUZZLES = {
     "split": ([".........."] * 6 + ["###...####", "####.#####"], "T", ()),
@@ -33,18 +33,21 @@ def replay(name, moves):
     return turn, steps
 
 
-def prefix(name, moves):
-    turn, _ = replay(name, moves)
+def prefix(name, committed):
+    turn, _ = replay(name, committed)
     if turn is None:
         return PrefixOutput(None, [])
     board = pack(turn.board)
     options = []
-    for orientation, shape in enumerate(rotations(SHAPES[turn.current])):
-        columns, clears = [], []
-        for column in range(WIDTH - len(shape[0]) + 1):
-            after, cleared = drop(board, turn.current, orientation, column)
-            if after is not None:
-                columns.append(column)
-                clears.append(cleared)
-        options.append(Rotation(list(shape), columns, clears))
-    return PrefixOutput(turn, options)
+    seen = set()
+    for orientation, column in moves(turn.current):
+        after, cleared = drop(board, turn.current, orientation, column)
+        if after in seen:
+            continue
+        seen.add(after)
+        resulting_board = board if after is None else after
+        heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*unpack(resulting_board)))]
+        holes = sum(heights) - resulting_board.bit_count()
+        options.append(Candidate(MoveOutput(orientation, column), cleared, holes, max(heights), after is None))
+    options.sort(key=lambda option: (option.top_out, -option.cleared, option.holes, option.height))
+    return PrefixOutput(turn, options[:4])
