@@ -1,9 +1,12 @@
 _ > nanoagent.plugin.v0001.ProductConfig:
-tagline: Watch AI solve Tetris without seeing the next piece
-summary: Ask the AI to play a puzzle, then open Result to see every drop and its optimality verdict.
+tagline: Watch the AI play Tetris and see how each move scores
+summary: |-
+  Ask the AI to play a puzzle, then open Result to see every drop and its optimality verdict.
+
+  prompt - "play the game"
 highlights:
-  - The AI sees only the current piece and the unordered bag
-  - Exact verification of each placement on its starting board
+  - The AI picks from up to eight drops before seeing the next piece
+  - Result shows every drop and its verified optimality
 steps:
-  - Ask the AI to play a puzzle
-  - Open Result to review every placement
+  - 'Type "play the game" in chat'
+  - Open Result to review each drop and its verdict

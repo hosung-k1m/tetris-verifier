@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tetris-verifier
 name: "Tetris: No Peek"
-version: 0.2.6
+version: 0.2.7
 status: ready
 spec: nanoagent.plugin/v0001
 runtime > nanoagent.plugin.v0001.RuntimeConfig:
@@ -14,12 +14,15 @@ permissions > nanoagent.plugin.v0001.PermissionsConfig:
     write: [workspace]
 tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
   legal_placements:
-    description: Enumerate orientations and columns with their immediate hard-drop boards, row clears, and top-outs.
+    description: Show the resulting board, cleared rows, and top-out status for each drop on a supplied turn.
   play_prefix:
-    description: Open the named puzzle with no moves, then append exactly one committed move per call to reveal the next turn.
+    description: Open the requested puzzle and show up to eight distinct drops. Append one committed move per call to reveal the next turn.
 tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
   play-puzzle:
-    description: Play the full AI-only puzzle and display the verified placements in Result. Use stack by default, or split if requested. Call once per request and report a task error if it fails.
+    description: >-
+      Play a puzzle when the user says "play the game" or asks to watch the AI play.
+      Use stack by default, or split if requested. Show each drop and its optimality
+      verdict in Result. Call once per request and report a task error if it fails.
     runner: agent
     tools: [play_prefix]
     reference: null
@@ -30,7 +33,7 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
       choice. Commit a move even when you are unsure. The verifier handles the full search.
       When turn is null, immediately call submit with the exact committed moves and finish.
   choose-optimal-move:
-    description: Grade one AI placement for an explicitly supplied custom turn.
+    description: Choose and verify one AI drop for a custom board and bag supplied by the user.
     runner: agent
     tools: [legal_placements]
     reference: null

@@ -1,6 +1,10 @@
 # Tetris: No Peek
 
-Ask RUSH Lab to play a puzzle (`stack` or `split`). The AI plays every turn. Open Result to see each placement, its starting and resulting boards, and whether it was optimal.
+Ask the AI to play a puzzle, then open Result to see every drop and its optimality verdict.
+
+prompt - "play the game"
+
+The default puzzle is `stack`. Ask for `split` to watch the shorter puzzle.
 
 The board is 10 columns by 8 rows. Orientations count clockwise turns from the shapes in `verifier/rules.py`, and columns are zero-based bounding-box positions. A straight drop that cannot enter the board ends the puzzle with a top-out score of 81. Otherwise the score counts cells after the final lock and row clears. Each move is checked from the actual board and visible bag at that turn, against every possible reveal. Every tied optimum passes.
 
