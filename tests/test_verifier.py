@@ -1,12 +1,12 @@
 from functools import cache
-from itertools import permutations
+from itertools import pairwise, permutations
 
 import pytest
 
 from contract import LegalPlacementsInput, MoveOutput, Task, Tool, TurnInput
 from verifier import verify_input, verify_output, verify_task
 from verifier.puzzles import puzzle
-from verifier.rules import TOP_OUT, drop, moves, pack, unpack
+from verifier.rules import TOP_OUT, drop, moves, pack, placements, unpack
 
 EMPTY = [".........."] * 8
 
@@ -16,7 +16,7 @@ def verdict(turn, orientation, column):
 
 
 def test_unique_optimum():
-    turn = puzzle("split").turn
+    turn = puzzle("split")
     results = [((rotation, col), verdict(turn, rotation, col)) for rotation, col in moves(turn.current)]
     assert [move for move, result in results if result["valid"]] == [(2, 3)]
     assert verdict(turn, 2, 3)["details"]["submitted_score"] == 0
@@ -32,7 +32,7 @@ def test_tied_nonzero_optima():
 
 
 def test_foreknowledge_does_not_count_and_worst_branch_replays():
-    turn = puzzle("stack").turn
+    turn = puzzle("stack")
     submitted = (0, 3)
     initial, _ = drop(pack(turn.board), turn.current, *submitted)
 
@@ -102,12 +102,49 @@ def test_tool_checks_immediate_boards_and_all_placements():
     from contract import LegalPlacementsOutput
 
     opening = puzzle("split")
-    turn = opening.turn
+    turn = opening
     tool_input = LegalPlacementsInput(turn.board, turn.current, turn.remaining)
-    output = LegalPlacementsOutput(opening.placements)
+    output = placements(turn)
     perfect = next(p for p in output.placements if p.move == MoveOutput(2, 3))
     assert (perfect.board, perfect.cleared, perfect.top_out) == (EMPTY, 2, False)
     assert verify_output(Tool.LEGAL, tool_input, output, None)["valid"]
     perfect.cleared = 1
     assert not verify_output(Tool.LEGAL, tool_input, output, None)["valid"]
     assert not verify_output(Tool.LEGAL, tool_input, LegalPlacementsOutput([]), None)["valid"]
+
+
+def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path):
+    import json
+
+    from contract import GameOutput, PuzzleInput
+    from verifier import COMMIT_LOG
+    from verifier.puzzles import replay
+    from verifier.search import grade
+
+    name = "stack"
+    played = [MoveOutput(0, 3)]
+    turn, _ = replay(name, played)
+    while turn is not None:
+        candidates = [placement.move for placement in placements(turn).placements]
+        grades = grade(turn, *candidates)
+        played.append(
+            next(move for move, check in zip(candidates, grades, strict=True) if check["status"] == "optimal")
+        )
+        turn, _ = replay(name, played)
+
+    log = tmp_path / COMMIT_LOG
+    log.write_text(
+        json.dumps(
+            {"puzzle": name, "moves": [{"orientation": move.orientation, "column": move.column} for move in played]}
+        )
+    )
+    result = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played), None, tmp_path)
+    assert not result["valid"]
+    steps = result["details"]["moves"]
+    assert [step["turn"].current for step in steps] == ["L", "O", "T", "I"]
+    assert [step["status"] for step in steps] == ["suboptimal", "optimal", "optimal", "optimal"]
+    assert all(after["turn"].board == before["board"] for before, after in pairwise(steps))
+
+    changed = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played[1:]), None, tmp_path)
+    assert not changed["valid"]
+    assert "differs" in changed["message"]

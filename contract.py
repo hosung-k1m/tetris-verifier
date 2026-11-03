@@ -7,14 +7,12 @@ from slimconfig import Output
 
 class Tool(Enum):
     LEGAL = "legal_placements"
-    START = "start_puzzle"
-    COMPARE = "compare_moves"
+    PLAY = "play_prefix"
 
 
 class Task(Enum):
     CHOOSE = "choose-optimal-move"
-    START = "start-puzzle"
-    COMPARE = "compare-moves"
+    PLAY = "play-puzzle"
 
 
 @dataclass
@@ -54,30 +52,26 @@ class PuzzleInput(Output):
 
 
 @dataclass
-class PuzzleOutput(Output):
-    turn: TurnInput
+class GameOutput(Output):
+    moves: Annotated[list[MoveOutput], "Every committed placement in order"]
+
+
+@dataclass
+class PrefixInput(PuzzleInput):
+    moves: Annotated[list[MoveOutput], "The committed prefix, empty to open, then append one move per call"]
+
+
+@dataclass
+class PrefixOutput(Output):
+    turn: TurnInput | None
     placements: list[Placement]
-
-
-@dataclass
-class CompareInput(Output):
-    turn: TurnInput
-    player: MoveOutput
-    agent: MoveOutput
-
-
-@dataclass
-class CompareOutput(CompareInput):
-    pass
 
 
 TOOLS = {
     Tool.LEGAL: (LegalPlacementsInput, LegalPlacementsOutput),
-    Tool.START: (PuzzleInput, PuzzleOutput),
-    Tool.COMPARE: (CompareInput, CompareOutput),
+    Tool.PLAY: (PrefixInput, PrefixOutput),
 }
 TASKS = {
     Task.CHOOSE: (TurnInput, MoveOutput),
-    Task.START: TOOLS[Tool.START],
-    Task.COMPARE: TOOLS[Tool.COMPARE],
+    Task.PLAY: (PuzzleInput, GameOutput),
 }

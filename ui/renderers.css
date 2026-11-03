@@ -1,5 +1,6 @@
 .tetris-grid {
   display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 2px;
   width: min(100%, 16rem);
   padding: 3px;
@@ -10,13 +11,11 @@
 .tetris-grid span { aspect-ratio: 1; border-radius: 2px; }
 .tetris-grid .filled { background: #65ddc6; }
 .tetris-grid .empty { background: #2d4057; }
-.tetris-turn, .tetris-outcomes {
+.tetris-boards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  margin-block: 1rem;
 }
-.tetris-piece { width: 2.5rem; text-align: center; }
-.tetris-bag { display: flex; flex-wrap: wrap; gap: .4rem; }
-select { display: block; max-width: 100%; margin-block: .4rem; }
+.tetris-moves { list-style: none; padding: 0; }
+.tetris-moves > li { margin-block: 1.25rem; }
 button { margin: .5rem .4rem 0 0; }

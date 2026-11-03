@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tetris-verifier
 name: "Tetris: No Peek"
-version: 0.1.0
+version: 0.2.0
 status: ready
 spec: nanoagent.plugin/v0001
 runtime > nanoagent.plugin.v0001.RuntimeConfig:
@@ -15,37 +15,26 @@ permissions > nanoagent.plugin.v0001.PermissionsConfig:
 tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
   legal_placements:
     description: Enumerate orientations and columns with their immediate hard-drop boards, row clears, and top-outs.
-  start_puzzle:
-    description: Load a curated turn with immediate placement previews.
-  compare_moves:
-    description: Evaluate two committed moves on the same turn through the deterministic verifier.
+  play_prefix:
+    description: Open the named puzzle with no moves, then append exactly one committed move per call to reveal the next turn.
 tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
-  start-puzzle:
-    description: Open the puzzle board. For a new game use puzzle split, or use stack if requested.
-    runner: tool
-    tools: [start_puzzle]
+  play-puzzle:
+    description: Play the full AI-only puzzle and display the verified placements in Result. Use stack by default, or split if requested.
+    runner: agent
+    tools: [play_prefix]
     reference: null
-    instructions: Open the named puzzle in the Result tab so the player can commit a placement.
+    instructions: |-
+      Call play_prefix with the requested puzzle and an empty moves list. It returns the current
+      turn and immediate placements. Commit exactly one new move by appending it to the moves list
+      and calling play_prefix again with the same puzzle. Repeat until turn is null. Submit the
+      exact list of committed moves. Every move is graded independently on its actual starting board.
+      Board rows are top first and # is occupied. Orientation counts clockwise quarter turns and
+      column is the zero-based left edge. Drops go straight down and full rows clear. Minimize the
+      worst terminal cell count (81 for top-out). After each commitment, any remaining piece could
+      be revealed. Plan a best response per reveal without assuming the order of the other pieces.
   choose-optimal-move:
-    description: >-
-      Choose the agent's placement after the player commits. For a committed-turn request, pass
-      exactly the turn object as task arguments. Then call compare-moves with that same turn, the
-      committed player move, and the exact agent output, even when the agent verdict failed.
+    description: Grade one AI placement for an explicitly supplied custom turn.
     runner: agent
     tools: [legal_placements]
     reference: null
-    instructions: |-
-      Submit one placement for the visible piece. The board is top row first; # is occupied.
-      Orientation is clockwise quarter turns from the tool's spawn shape; column is the zero-based
-      left edge. Pieces fall straight down, then full rows clear. Blocked entry is top-out.
-      Minimize the worst terminal cell count (81 for top-out). After you commit, any remaining piece
-      can be revealed. For each reveal you can then pick a different best move, without knowing the
-      order of later reveals. All ties pass. legal_placements lists immediate results only.
-  compare-moves:
-    description: >-
-      Show both outcomes after choose-optimal-move. Copy the turn, committed player move, and
-      exact submitted agent move. Never change the moves or choose a new move during comparison.
-    runner: tool
-    tools: [compare_moves]
-    reference: null
-    instructions: Display the verified comparison in the Result tab.
+    instructions: Submit one placement that minimizes the worst terminal cell count over unknown reveals. Ties pass.

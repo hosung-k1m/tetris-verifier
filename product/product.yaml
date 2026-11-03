@@ -1,12 +1,9 @@
 _ > nanoagent.plugin.v0001.ProductConfig:
-tagline: Make the best drop without seeing the next piece
-summary: >-
-  Ask to start a puzzle, then open the Result tab to choose and commit your drop.
-  The agent plays the same turn. Compare how both moves hold up against the worst reveal order.
+tagline: Watch AI solve Tetris without seeing the next piece
+summary: Ask the AI to play a puzzle, then open Result to see every drop and its optimality verdict.
 highlights:
-  - Same board and hidden bag for both players
-  - Exact move grading and worst-order replays
+  - The AI sees only the current piece and the unordered bag
+  - Exact verification of each placement on its starting board
 steps:
-  - Ask to start a puzzle
-  - Preview and commit your placement in the Result tab
-  - Compare your score with the agent's
+  - Ask the AI to play a puzzle
+  - Open Result to review every placement
