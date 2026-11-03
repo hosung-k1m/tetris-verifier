@@ -1,6 +1,6 @@
-from contract import PrefixOutput, RotationPreview, TurnInput
+from contract import Candidate, MoveOutput, PrefixOutput, TurnInput
 
-from .rules import SHAPES, WIDTH, drop, legal, pack, rotations, unpack
+from .rules import drop, legal, moves, pack, unpack
 
 PUZZLES = {
     "split": ([".........."] * 6 + ["###...####", "####.#####"], "T", ()),
@@ -38,15 +38,17 @@ def prefix(name, committed):
     if turn is None:
         return PrefixOutput(None, [])
     board = pack(turn.board)
-    previews = []
-    for orientation, shape in enumerate(rotations(SHAPES[turn.current])):
-        drops = []
-        for column in range(WIDTH - len(shape[0]) + 1):
-            after, cleared = drop(board, turn.current, orientation, column)
-            if after is None:
-                drops.append([])
-                continue
-            heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*unpack(after)))]
-            drops.append([cleared, sum(heights) - after.bit_count(), max(heights)])
-        previews.append(RotationPreview(list(shape), drops))
-    return PrefixOutput(turn, previews)
+    options = []
+    seen = set()
+    for orientation, column in moves(turn.current):
+        after, cleared = drop(board, turn.current, orientation, column)
+        if after in seen:
+            continue
+        seen.add(after)
+        resulting_board = board if after is None else after
+        heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*unpack(resulting_board)))]
+        holes = sum(heights) - resulting_board.bit_count()
+        options.append(Candidate(MoveOutput(orientation, column), cleared, holes, max(heights), after is None))
+    options.sort(key=lambda option: (option.top_out, -option.cleared, option.holes, option.height))
+    shortlist = sorted(options[:8], key=lambda option: (option.move.orientation, option.move.column))
+    return PrefixOutput(turn, shortlist)

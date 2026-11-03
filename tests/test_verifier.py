@@ -150,11 +150,12 @@ def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path)
     assert "differs" in changed["message"]
 
 
-def test_play_preview_includes_every_orientation_and_column():
+def test_play_preview_offers_eight_distinct_drops_in_board_order():
     from verifier.puzzles import prefix
 
     opening = prefix("stack", [])
-    assert len(opening.rotations) == 4
-    assert [len(rotation.drops) for rotation in opening.rotations] == [8, 9, 8, 9]
-    assert opening.rotations[0].shape == ["..#", "###"]
-    assert opening.rotations[1].drops[7] == [0, 2, 3]
+    moves = [(candidate.move.orientation, candidate.move.column) for candidate in opening.candidates]
+    assert len(moves) == 8
+    assert moves == sorted(set(moves))
+    board = pack(opening.turn.board)
+    assert len({drop(board, opening.turn.current, *move)[0] for move in moves}) == 8

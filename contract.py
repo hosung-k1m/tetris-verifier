@@ -62,18 +62,18 @@ class PrefixInput(PuzzleInput):
 
 
 @dataclass
-class RotationPreview(Output):
-    shape: list[str]
-    drops: Annotated[
-        list[list[int]],
-        "One row per column, indexed from zero. Each row is [clears, holes, height], or [] for top-out.",
-    ]
+class Candidate(Output):
+    move: MoveOutput
+    cleared: int
+    holes: Annotated[int, "Empty cells below occupied cells after the drop"]
+    height: Annotated[int, "Height of the tallest column after the drop"]
+    top_out: bool
 
 
 @dataclass
 class PrefixOutput(Output):
     turn: TurnInput | None
-    rotations: Annotated[list[RotationPreview], "Every placement grouped by clockwise quarter turns"]
+    candidates: Annotated[list[Candidate], "Up to eight distinct drops in orientation and column order"]
 
 
 TOOLS = {
