@@ -148,3 +148,13 @@ def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path)
     changed = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played[1:]), None, tmp_path)
     assert not changed["valid"]
     assert "differs" in changed["message"]
+
+
+def test_play_preview_includes_every_orientation_and_column():
+    from verifier.puzzles import prefix
+
+    opening = prefix("stack", [])
+    assert len(opening.rotations) == 4
+    assert [len(rotation.drops) for rotation in opening.rotations] == [8, 9, 8, 9]
+    assert opening.rotations[0].shape == ["..#", "###"]
+    assert opening.rotations[1].drops[7] == [0, 2, 3]
