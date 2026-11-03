@@ -62,19 +62,17 @@ class PrefixInput(PuzzleInput):
 
 
 @dataclass
-class Candidate(Output):
-    move: MoveOutput
-    cleared: int
-    holes: Annotated[int, "Empty cells below occupied cells after the drop"]
-    height: Annotated[int, "Height of the tallest column after the drop"]
-    top_out: bool
-    board: Annotated[str, "Board after the drop, top to bottom, rows separated by /"]
+class PlayTurn(TurnInput):
+    board: Annotated[list[str], "Board with empty rows above the stack omitted"]
 
 
 @dataclass
 class PrefixOutput(Output):
-    turn: TurnInput | None
-    candidates: Annotated[list[Candidate], "Up to eight distinct drops in orientation and column order"]
+    turn: PlayTurn | None
+    drops: Annotated[
+        list[list[int]],
+        "Up to eight rows: [orientation, column, clears, holes, height], or [orientation, column] for top-out",
+    ]
 
 
 TOOLS = {

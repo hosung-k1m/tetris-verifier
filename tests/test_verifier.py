@@ -168,8 +168,9 @@ def test_play_preview_offers_eight_distinct_drops_in_board_order():
     from verifier.puzzles import prefix
 
     opening = prefix("stack", [])
-    moves = [(candidate.move.orientation, candidate.move.column) for candidate in opening.candidates]
+    moves = [tuple(option[:2]) for option in opening.drops]
     assert len(moves) == 8
     assert moves == sorted(set(moves))
-    board = pack(opening.turn.board)
+    assert opening.turn.board == ["..##......", "##..###..#"]
+    board = pack(puzzle("stack").board)
     assert len({drop(board, opening.turn.current, *move)[0] for move in moves}) == 8

@@ -1,4 +1,4 @@
-from contract import Candidate, MoveOutput, PrefixOutput, TurnInput
+from contract import PlayTurn, PrefixOutput, TurnInput
 
 from .rules import drop, legal, moves, pack, unpack
 
@@ -49,9 +49,11 @@ def prefix(name, committed):
         rows = unpack(resulting_board)
         heights = [len(stack.lstrip(".")) for stack in map("".join, zip(*rows))]
         holes = sum(heights) - resulting_board.bit_count()
-        options.append(
-            Candidate(MoveOutput(orientation, column), cleared, holes, max(heights), after is None, "/".join(rows))
-        )
-    options.sort(key=lambda option: (option.top_out, -option.cleared, option.holes, option.height))
-    shortlist = sorted(options[:8], key=lambda option: (option.move.orientation, option.move.column))
-    return PrefixOutput(turn, shortlist)
+        option = [orientation, column]
+        if after is not None:
+            option.extend((cleared, holes, max(heights)))
+        options.append(((after is None, -cleared, holes, max(heights)), option))
+    options.sort()
+    shortlist = sorted(option for _, option in options[:8])
+    first = next((index for index, row in enumerate(turn.board) if "#" in row), len(turn.board))
+    return PrefixOutput(PlayTurn(turn.board[first:], turn.current, turn.remaining), shortlist)

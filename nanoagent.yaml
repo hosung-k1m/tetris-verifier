@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tetris-verifier
 name: "Tetris: No Peek"
-version: 0.2.10
+version: 0.2.11
 status: ready
 spec: nanoagent.plugin/v0001
 runtime > nanoagent.plugin.v0001.RuntimeConfig:
@@ -27,12 +27,11 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
     tools: [play_prefix]
     reference: null
     instructions: |-
-      Open the requested puzzle with play_prefix and moves: [].
-      Make a quick choice from the eight previews. Compare immediate clears, holes, and resulting
-      boards. Do not simulate future pieces or restate the board. Your response is the tool call.
-      If turn is null, call submit with the committed moves.
-      If turn.remaining is empty, append your final move and call submit directly.
-      Otherwise append your chosen move and call play_prefix to reveal the next turn.
+      Open with play_prefix and moves: [].
+      Each drop is [orientation, column, clears, holes, height]. A two-number drop tops out.
+      Pick quickly using those numbers. Append the first two numbers as orientation and column.
+      If more pieces remain, call play_prefix. On the last piece, call submit directly.
+      If turn is null, submit the moves already committed.
   choose-optimal-move:
     description: Choose and verify one AI drop for a custom board and bag supplied by the user.
     runner: agent
