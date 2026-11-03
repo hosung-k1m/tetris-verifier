@@ -1,8 +1,10 @@
 import { h } from "./kit/components.js";
 
-function grid(rows, label) {
+function grid(rows, label, overlay, color) {
   return h("div", { class: "tetris-grid", role: "img", "aria-label": label },
-    rows.flatMap(row => [...row].map(cell => h("span", { class: cell === "#" ? "filled" : "empty" }))));
+    rows.flatMap((row, y) => [...row].map((cell, x) => h("span", {
+      class: overlay?.[y][x] === "#" ? color : cell === "#" ? "filled" : "empty",
+    }))));
 }
 
 const moveLabel = move => `${90 * move.orientation}° clockwise · column ${move.column + 1}`;
@@ -15,23 +17,41 @@ function outcome(graded) {
   ];
 }
 
-function game(_value, { verdict, send }) {
-  const moves = verdict.details.moves;
+function dropPanel(title, color, turn, move, cells, score) {
   return h("section", {},
-    h("p", { text: verdict.message }),
-    h("ol", { class: "tetris-moves" }, moves.map((step, index) => h("li", {},
-      h("h4", { text: `Move ${index + 1}: ${step.turn.current} · ${moveLabel(step.move)}` }),
-      h("p", { text: `Remaining before placement: ${step.turn.remaining.join(", ") || "none"}` }),
-      outcome(step),
-      h("div", { class: "tetris-boards" },
-        h("div", {}, h("p", { text: "Before drop" }), grid(step.turn.board, "Board before drop")),
-        h("div", {}, h("p", { text: step.top_out ? "Top-out" : `Rows cleared: ${step.cleared}` }),
-          grid(step.board, "Board after drop")),
-      ),
-    ))),
-    ...["stack", "split"].map(puzzle => h("button", {
-      type: "button", class: "button", text: `Watch ${puzzle}`,
-      onclick: () => send(`Run play-puzzle with puzzle ${puzzle}.`),
+    h("h5", { class: color, text: title }),
+    h("p", { text: moveLabel(move) }),
+    grid(turn.board, `${title} on the board before row clears`, cells, color),
+    cells === null ? h("p", { text: "Top-out · piece could not enter" }) : null,
+    h("p", { text: `Worst case: ${scoreLabel(score)}` }),
+  );
+}
+
+function game(_value, { verdict }) {
+  const moves = verdict.details.moves;
+  if (!moves.length) return h("p", { text: verdict.message });
+  const optimal = moves.filter(step => step.status === "optimal").length;
+  return h("section", {},
+    h("p", { class: "tetris-summary", text: `${optimal} of ${moves.length} drops optimal` }),
+    h("p", { text: "Worst case shows how many cells could remain after all pieces are played. Lower is better." }),
+    h("ol", { class: "tetris-moves" }, moves.map((step, index) => {
+      const matched = step.status === "optimal";
+      return h("li", {},
+        h("header", { class: "tetris-move-heading" },
+          h("h4", { text: `Move ${index + 1} · ${step.turn.current} piece` }),
+          h("span", { class: `tetris-badge ${matched ? "best-drop" : "ai-drop"}`,
+            text: matched ? "Optimal" : "Suboptimal" }),
+        ),
+        h("p", { text: `Pieces still hidden: ${step.turn.remaining.join(", ") || "none"}` }),
+        step.placed_cells === undefined
+          ? grid(step.board, "Board after drop")
+          : h("div", { class: "tetris-boards" },
+            dropPanel("AI drop", "ai-drop", step.turn, step.move, step.placed_cells, step.submitted_score),
+            dropPanel(matched ? "Same drop is optimal" : "One optimal drop", "best-drop", step.turn,
+              step.optimal_move ?? step.move, step.optimal_cells, step.optimal_score),
+          ),
+        h("p", { text: `Rows cleared by the AI: ${step.cleared}` }),
+      );
     })),
   );
 }

@@ -147,6 +147,12 @@ def test_game_grades_each_committed_turn_and_rejects_rewritten_history(tmp_path)
     assert [step["turn"].current for step in steps] == ["L", "O", "T", "I"]
     assert [step["status"] for step in steps] == ["suboptimal", "optimal", "optimal", "optimal"]
     assert all(after["turn"].board == before["board"] for before, after in pairwise(steps))
+    first = steps[0]
+    assert first["placed_cells"] != first["optimal_cells"]
+    assert pack(first["placed_cells"]).bit_count() == pack(first["optimal_cells"]).bit_count() == 4
+    optimal_move = first["optimal_move"]
+    assert verdict(first["turn"], optimal_move.orientation, optimal_move.column)["valid"]
+    assert steps[-1]["placed_cells"] == steps[-1]["optimal_cells"]
 
     changed = verify_task(Task.PLAY, PuzzleInput(name), GameOutput(played[1:]), None, tmp_path)
     assert not changed["valid"]

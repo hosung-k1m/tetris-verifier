@@ -86,14 +86,21 @@ def legal(piece, move):
     )
 
 
-def drop(board, piece, orientation, column):
+def landing(board, piece, orientation, column):
     mask, lift = MASKS[piece][orientation][column]
     falling = mask << (lift * WIDTH)
     if board & falling:
-        return None, 0
+        return None
     while lift and not board & (falling >> WIDTH):
         falling >>= WIDTH
         lift -= 1
+    return falling
+
+
+def drop(board, piece, orientation, column):
+    falling = landing(board, piece, orientation, column)
+    if falling is None:
+        return None, 0
     locked = board | falling
     compact = 0
     kept = 0

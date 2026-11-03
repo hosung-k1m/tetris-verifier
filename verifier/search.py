@@ -49,7 +49,7 @@ def grade(turn, *submissions):
 
     board, piece, remaining = pack(turn.board), turn.current, tuple(sorted(turn.remaining))
     try:
-        optimal, _ = best(board, piece, remaining)
+        optimal, optimal_move = best(board, piece, remaining)
         results = []
         for move in submissions:
             if not legal(piece, move):
@@ -63,6 +63,7 @@ def grade(turn, *submissions):
                 "optimal_score": optimal,
             }
             if score != optimal:
+                result["optimal_move"] = MoveOutput(*optimal_move)
                 result["replay"] = list(replay(board, piece, remaining, selected))
             results.append(result)
         return results

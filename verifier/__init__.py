@@ -4,7 +4,7 @@ from pathlib import Path
 from contract import Task, Tool
 
 from .puzzles import PUZZLES, prefix, replay
-from .rules import legal, placements, turn_error
+from .rules import landing, legal, pack, placements, turn_error, unpack
 from .search import grade
 
 COMMIT_LOG = "tetris-committed.json"
@@ -70,20 +70,31 @@ def verify_task(task, arguments, output, reference, workspace):
             return result(False, "Illegal orientation or column on the last drop.", moves=[])
 
     turn, steps = replay(arguments.puzzle, output.moves)
-    graded = [
-        {
-            "turn": before,
-            "move": move,
-            "board": board,
-            "cleared": cleared,
-            "top_out": top_out,
-            **verify_move(before, move)["details"],
-        }
-        for before, move, board, cleared, top_out in steps
-    ]
+    graded = []
+    for before, move, board, cleared, top_out in steps:
+        check = verify_move(before, move)["details"]
+        optimal_move = check.get("optimal_move", move)
+        graded.append(
+            {
+                "turn": before,
+                "move": move,
+                "board": board,
+                "cleared": cleared,
+                "top_out": top_out,
+                "placed_cells": drop_cells(before, move),
+                "optimal_cells": drop_cells(before, optimal_move),
+                **check,
+            }
+        )
     if turn is not None:
         return result(False, "The puzzle ended before all required pieces were placed.", moves=graded)
     optimal = all(move["status"] == "optimal" for move in graded)
     return result(
         optimal, "Every placement was optimal." if optimal else "Some placements were suboptimal.", moves=graded
     )
+
+
+def drop_cells(turn, move):
+    """Mark the four landing cells before any row clears."""
+    cells = landing(pack(turn.board), turn.current, move.orientation, move.column)
+    return None if cells is None else unpack(cells)
