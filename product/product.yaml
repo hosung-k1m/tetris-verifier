@@ -4,6 +4,8 @@ summary: |-
   Ask the AI to play a puzzle, then open Result to see every drop and its optimality verdict.
 
   prompt - "play the game"
+
+  Note: You may need to run it a couple of times. The 2,048-token output limit can interrupt a tool call and cause an error.
 highlights:
   - The AI picks from up to eight drops before seeing the next piece
   - Result shows every drop and its verified optimality
