@@ -62,9 +62,16 @@ class PrefixInput(PuzzleInput):
 
 
 @dataclass
+class Rotation(Output):
+    shape: Annotated[list[str], "Occupied cells marked #, top row first"]
+    columns: Annotated[list[int], "Zero-based columns where the piece can enter the board"]
+    clears: Annotated[list[int], "Immediate row clears for each listed column"]
+
+
+@dataclass
 class PrefixOutput(Output):
     turn: TurnInput | None
-    placements: list[Placement]
+    rotations: Annotated[list[Rotation], "Shapes and columns indexed by clockwise quarter turns"]
 
 
 TOOLS = {

@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tetris-verifier
 name: "Tetris: No Peek"
-version: 0.2.1
+version: 0.2.2
 status: ready
 spec: nanoagent.plugin/v0001
 runtime > nanoagent.plugin.v0001.RuntimeConfig:
@@ -19,19 +19,21 @@ tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
     description: Open the named puzzle with no moves, then append exactly one committed move per call to reveal the next turn.
 tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
   play-puzzle:
-    description: Play the full AI-only puzzle and display the verified placements in Result. Use stack by default, or split if requested.
+    description: Play the full AI-only puzzle and display the verified placements in Result. Use stack by default, or split if requested. Call once per request and report a task error if it fails.
     runner: agent
     tools: [play_prefix]
     reference: null
     instructions: |-
-      Call play_prefix with the requested puzzle and an empty moves list. It returns the current
-      turn and immediate placements. Commit exactly one new move by appending it to the moves list
-      and calling play_prefix again with the same puzzle. Repeat until turn is null. Submit the
-      exact list of committed moves. Every move is graded independently on its actual starting board.
-      Board rows are top first and # is occupied. Orientation counts clockwise quarter turns and
-      column is the zero-based left edge. Drops go straight down and full rows clear. Minimize the
-      worst terminal cell count (81 for top-out). After each commitment, any remaining piece could
-      be revealed. Plan a best response per reveal without assuming the order of the other pieces.
+      First call play_prefix with the requested puzzle and moves: []. Then make one tool call
+      per turn. If turn is null, immediately call submit with the exact committed moves list
+      and finish. Otherwise append one move and call play_prefix again.
+      Spend at most 120 words of reasoning per turn. Use the returned rotations directly.
+      Their indices are orientations, and each lists its exact shape, available columns, and
+      immediate clears. If every column list is empty, commit orientation 0, column 0 to top out.
+      Aim to minimize the worst terminal cell count over the unordered remaining pieces.
+      Look briefly for line clears and accessible gaps. If you cannot prove the best move quickly,
+      commit your best candidate and keep playing. The verifier will calculate exact optimality.
+      Completing the puzzle and calling submit is required even if you are unsure of a move.
   choose-optimal-move:
     description: Grade one AI placement for an explicitly supplied custom turn.
     runner: agent
